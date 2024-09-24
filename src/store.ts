@@ -115,8 +115,9 @@ export function createRealmAuthStoreHooks<
 >(
   initialState?: Partial<RealmAuthStore<TRealmAccess, TContext>>,
   realmAccessIdGetter: RealmAccessIdGetter<TRealmAccess> = defaultRealmAccessIdGetter<TRealmAccess>,
+  contextChangeActiveAccessSelector = defaultContextChangeActiveAccessSelector<TRealmAccess>,
 ) {
-  const useRealmAuthStore = createRealmAuthStore(initialState, realmAccessIdGetter);
+  const useRealmAuthStore = createRealmAuthStore(initialState, realmAccessIdGetter, contextChangeActiveAccessSelector);
 
   return {
     useRealmAuthStore,
