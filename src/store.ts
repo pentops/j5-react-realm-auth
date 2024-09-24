@@ -49,11 +49,7 @@ export interface RealmAuthStore<
   context: TContext | undefined; // context could be the whoami response for an authenticated user
   isAuthenticating: boolean;
   isAuthenticated: boolean;
-  setContext: (
-    cb: (context: TContext | undefined) => TContext | undefined,
-    defaultActiveAccessSelector?: ContextChangeActiveAccessSelector<TRealmAccess, TContext>,
-    isAuthenticating?: boolean,
-  ) => TContext | undefined;
+  setContext: (cb: (context: TContext | undefined) => TContext | undefined, isAuthenticating?: boolean) => TContext | undefined;
   setActiveAccess: (realmAccessId: string) => TRealmAccess | undefined;
   reset(): void;
 }
@@ -71,10 +67,11 @@ export function createRealmAuthStore<
 >(
   initialState?: Partial<RealmAuthStore<TRealmAccess, TContext>>,
   realmAccessIdGetter: RealmAccessIdGetter<TRealmAccess> = defaultRealmAccessIdGetter<TRealmAccess>,
+  contextChangeActiveAccessSelector = defaultContextChangeActiveAccessSelector<TRealmAccess>,
 ) {
   return create<RealmAuthStore<TRealmAccess, TContext>>((set, get) => ({
     ...defaultInitialState,
-    setContext: (cb, contextChangeActiveAccessSelector = defaultContextChangeActiveAccessSelector<TRealmAccess>, isAuthenticating = false) => {
+    setContext: (cb, isAuthenticating = false) => {
       const { context: prevContext, activeAccess } = get();
       const result = cb(prevContext);
 
@@ -93,7 +90,7 @@ export function createRealmAuthStore<
       const { activeAccess: prevAccess, context } = get();
 
       if (prevAccess && realmAccessId === realmAccessIdGetter(prevAccess)) {
-        return;
+        return prevAccess;
       }
 
       const access = context?.accesses?.find((ctxAccess) => realmAccessId === realmAccessIdGetter(ctxAccess));
