@@ -51,7 +51,7 @@ export interface RealmAuthStore<
   isAuthenticated: boolean;
   setContext: (cb: (context: TContext | undefined) => TContext | undefined, isAuthenticating?: boolean) => TContext | undefined;
   setActiveAccess: (realmAccessId: string) => TRealmAccess | undefined;
-  reset(): void;
+  reset(isAuthenticating?: boolean): void;
 }
 
 export const defaultInitialState = {
@@ -102,8 +102,8 @@ export function createRealmAuthStore<
       set({ activeAccess: access });
       return access;
     },
-    reset() {
-      set({ ...defaultInitialState, ...initialState });
+    reset(isAuthenticating = true) {
+      set({ ...defaultInitialState, ...initialState, isAuthenticating });
     },
     ...initialState,
   }));
