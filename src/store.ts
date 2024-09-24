@@ -9,6 +9,8 @@ import {
   selectReset,
   selectSetActiveAccess,
   selectSetContext,
+  selectSetIsAuthenticated,
+  selectSetIsAuthenticating,
 } from './selectors';
 
 export type RealmAccessIdGetter<TRealmAccess extends RealmAccess = RealmAccess> = (realmAccess: TRealmAccess) => string;
@@ -49,6 +51,8 @@ export interface RealmAuthStore<
   context: TContext | undefined; // context could be the whoami response for an authenticated user
   isAuthenticating: boolean;
   isAuthenticated: boolean;
+  setIsAuthenticating: (isAuthenticating: boolean) => void;
+  setIsAuthenticated: (isAuthenticated: boolean) => void;
   setContext: (cb: (context: TContext | undefined) => TContext | undefined, isAuthenticating?: boolean) => TContext | undefined;
   setActiveAccess: (realmAccessId: string) => TRealmAccess | undefined;
   reset(isAuthenticating?: boolean): void;
@@ -71,16 +75,14 @@ export function createRealmAuthStore<
 ) {
   return create<RealmAuthStore<TRealmAccess, TContext>>((set, get) => ({
     ...defaultInitialState,
-    setContext: (cb, isAuthenticating = false) => {
+    setIsAuthenticating: (isAuthenticating) => set({ isAuthenticating }),
+    setIsAuthenticated: (isAuthenticated) => set({ isAuthenticated }),
+    setContext: (cb) => {
       const { context: prevContext, activeAccess } = get();
       const result = cb(prevContext);
 
-      const isAuthenticated = Boolean(result);
-
       set({
         context: result,
-        isAuthenticating,
-        isAuthenticated,
         activeAccess: result ? contextChangeActiveAccessSelector?.(result, activeAccess, realmAccessIdGetter) : undefined,
       });
 
@@ -128,5 +130,7 @@ export function createRealmAuthStoreHooks<
     useRealmAuthReset: () => useRealmAuthStore(selectReset),
     useRealmAuthSetActiveAccess: () => useRealmAuthStore(selectSetActiveAccess),
     useRealmAuthSetContext: () => useRealmAuthStore(selectSetContext),
+    useRealmAuthSetIsAuthenticated: () => useRealmAuthStore(selectSetIsAuthenticated),
+    useRealmAuthSetIsAuthenticating: () => useRealmAuthStore(selectSetIsAuthenticating),
   } as const;
 }

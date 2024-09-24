@@ -49,3 +49,17 @@ export function selectSetContext<
 >(state: RealmAuthStore<TRealmAccess, TContext>) {
   return state.setContext;
 }
+
+export function selectSetIsAuthenticating<
+  TRealmAccess extends RealmAccess = RealmAccess,
+  TContext extends WhoAmIContext<TRealmAccess> = WhoAmIContext<TRealmAccess>,
+>(state: RealmAuthStore<TRealmAccess, TContext>) {
+  return state.setIsAuthenticating;
+}
+
+export function selectSetIsAuthenticated<
+  TRealmAccess extends RealmAccess = RealmAccess,
+  TContext extends WhoAmIContext<TRealmAccess> = WhoAmIContext<TRealmAccess>,
+>(state: RealmAuthStore<TRealmAccess, TContext>) {
+  return state.setIsAuthenticated;
+}
