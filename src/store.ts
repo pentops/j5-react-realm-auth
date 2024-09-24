@@ -17,10 +17,29 @@ export function defaultRealmAccessIdGetter<TRealmAccess extends RealmAccess = Re
   return [realmAccess.realm.realmId, realmAccess.tenant.tenantId].filter(Boolean).join(':');
 }
 
-export type DefaultActiveAccessSelector<
+export type ContextChangeActiveAccessSelector<
   TRealmAccess extends RealmAccess = RealmAccess,
   TContext extends WhoAmIContext<TRealmAccess> = WhoAmIContext<TRealmAccess>,
-> = (context: TContext) => TRealmAccess | undefined;
+> = (
+  context: TContext | undefined,
+  activeAccess: TRealmAccess | undefined,
+  realmAccessIdGetter: RealmAccessIdGetter<TRealmAccess>,
+) => TRealmAccess | undefined;
+
+export function defaultContextChangeActiveAccessSelector<
+  TRealmAccess extends RealmAccess = RealmAccess,
+  TContext extends WhoAmIContext<TRealmAccess> = WhoAmIContext<TRealmAccess>,
+>(
+  context: TContext | undefined,
+  activeAccess: TRealmAccess | undefined,
+  realmAccessIdGetter: RealmAccessIdGetter<TRealmAccess> = defaultRealmAccessIdGetter<TRealmAccess>,
+): TRealmAccess | undefined {
+  if (context && activeAccess) {
+    return context.accesses.find((ctxAccess) => realmAccessIdGetter(ctxAccess) === realmAccessIdGetter(activeAccess));
+  }
+
+  return context?.accesses[0];
+}
 
 export interface RealmAuthStore<
   TRealmAccess extends RealmAccess = RealmAccess,
@@ -32,14 +51,14 @@ export interface RealmAuthStore<
   isAuthenticated: boolean;
   setContext: (
     cb: (context: TContext | undefined) => TContext | undefined,
-    defaultActiveAccessSelector?: DefaultActiveAccessSelector<TRealmAccess, TContext>,
+    defaultActiveAccessSelector?: ContextChangeActiveAccessSelector<TRealmAccess, TContext>,
     isAuthenticating?: boolean,
   ) => TContext | undefined;
   setActiveAccess: (realmAccessId: string) => TRealmAccess | undefined;
   reset(): void;
 }
 
-const defaultInitialState = {
+export const defaultInitialState = {
   activeAccess: undefined,
   context: undefined,
   isAuthenticating: true,
@@ -55,13 +74,18 @@ export function createRealmAuthStore<
 ) {
   return create<RealmAuthStore<TRealmAccess, TContext>>((set, get) => ({
     ...defaultInitialState,
-    setContext: (cb, defaultActiveAccessSelector, isAuthenticating = false) => {
-      const { context: prevContext } = get();
+    setContext: (cb, contextChangeActiveAccessSelector = defaultContextChangeActiveAccessSelector<TRealmAccess>, isAuthenticating = false) => {
+      const { context: prevContext, activeAccess } = get();
       const result = cb(prevContext);
 
       const isAuthenticated = Boolean(result);
 
-      set({ context: result, isAuthenticating, isAuthenticated, activeAccess: result ? defaultActiveAccessSelector?.(result) : undefined });
+      set({
+        context: result,
+        isAuthenticating,
+        isAuthenticated,
+        activeAccess: result ? contextChangeActiveAccessSelector?.(result, activeAccess, realmAccessIdGetter) : undefined,
+      });
 
       return result;
     },
@@ -106,5 +130,5 @@ export function createRealmAuthStoreHooks<
     useRealmAuthReset: () => useRealmAuthStore(selectReset),
     useRealmAuthSetActiveAccess: () => useRealmAuthStore(selectSetActiveAccess),
     useRealmAuthSetContext: () => useRealmAuthStore(selectSetContext),
-  };
+  } as const;
 }
