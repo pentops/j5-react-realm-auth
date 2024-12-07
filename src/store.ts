@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { useShallow } from 'zustand/react/shallow';
-import { type RealmAccess, type WhoAmIContext } from './types';
+import type { RealmAccess, WhoAmIContext } from './types';
 import {
   selectActiveAccess,
   selectContext,
